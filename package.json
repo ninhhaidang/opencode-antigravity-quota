@@ -1,0 +1,45 @@
+{
+  "name": "opencode-antigravity-quota",
+  "version": "1.0.0",
+  "description": "Check Google Antigravity quota for multi-account setups in OpenCode",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "type": "module",
+  "keywords": [
+    "opencode",
+    "opencode-plugin",
+    "google",
+    "antigravity",
+    "gemini",
+    "claude",
+    "quota",
+    "multi-account"
+  ],
+  "author": "NinhHaiDang",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ninhhaidang/opencode-antigravity-quota.git"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "scripts": {
+    "build": "tsc",
+    "typecheck": "tsc --noEmit",
+    "prepublishOnly": "npm run build"
+  },
+  "peerDependencies": {
+    "@opencode-ai/plugin": "^1.1.0"
+  },
+  "devDependencies": {
+    "@opencode-ai/plugin": "^1.1.28",
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0"
+  },
+  "files": [
+    "dist/",
+    "README.md",
+    "LICENSE"
+  ]
+}
