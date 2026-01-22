@@ -48,8 +48,25 @@ Simply ask OpenCode to check your status:
 > "How much quota do I have left on Gemini?"
 > "Is my Claude quota exhausted?"
 
-### Slash Command
-You can configure a custom slash command in your OpenCode setup (e.g., `/quota`) that maps to the `google_quota` tool.
+### Slash Command (Recommended)
+
+To get the raw, colored table output directly in your chat, configure a slash command (e.g., `/gquota`) that executes the CLI tool.
+
+Create a file at `~/.config/opencode/commands/gquota.md`:
+
+```markdown
+---
+description: Check Google/Antigravity quota (Direct CLI Output)
+---
+
+Here is the current status of your Google/Antigravity quotas:
+
+!`gquota`
+
+Please display this information exactly as shown above. Do not summarize or alter the format.
+```
+
+Now you can simply type `/gquota` in OpenCode to see the full dashboard.
 
 ---
 
