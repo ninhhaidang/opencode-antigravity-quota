@@ -30,6 +30,8 @@ Detailed guides are available in the [`docs/`](./docs) directory:
 
 ## ⚡ Quick Start
 
+> **Tip:** Too lazy to type commands? Try the [**🤖 AI Agent Quick Install**](./docs/INSTALLATION.md#ai-agent-quick-install).
+
 ### Install from Source
 
 ```bash
