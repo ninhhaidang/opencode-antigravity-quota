@@ -8,7 +8,7 @@ import { COLORS } from './constants.js';
 /**
  * Create a colored progress bar for quota visualization
  * Fixed width output with consistent ANSI codes
- * Using ASCII characters for consistent width across terminals
+ * Using Unicode block characters: █ (filled) and ░ (empty)
  */
 function createProgressBar(percent: number, width: number = 10): string {
   const filled = Math.round((percent / 100) * width);
@@ -19,9 +19,9 @@ function createProgressBar(percent: number, width: number = 10): string {
   if (percent < 50) color = COLORS.red;
   else if (percent < 80) color = COLORS.yellow;
   
-  // Use ASCII characters for consistent width: # for filled, - for empty
-  const filledPart = '#'.repeat(filled);
-  const emptyPart = '-'.repeat(empty);
+  // Use Unicode block characters: █ for filled, ░ for empty
+  const filledPart = '█'.repeat(filled);
+  const emptyPart = '░'.repeat(empty);
   
   return `${color}[${filledPart}${emptyPart}]${COLORS.reset}`;
 }
@@ -158,24 +158,19 @@ function getModelQuota(result: AccountQuotaResult, modelName: string): ModelQuot
 
 /**
  * Format a cell in the pivot table (fixed width, accounts for ANSI codes)
- * Target visible width: 19 chars (acctColWidth - 2 - 1 trailing space in template)
  */
-function formatCell(quota: ModelQuota | undefined, targetWidth: number = 19): string {
+function formatCell(quota: ModelQuota | undefined): string {
   if (!quota) {
-    // "N/A" = 3 chars, need to pad to targetWidth
-    const padding = ' '.repeat(targetWidth - 3);
-    return `${COLORS.dim}N/A${COLORS.reset}${padding}`;
+    return `${COLORS.dim}N/A${COLORS.reset}`;
   }
   
-  // Fixed format: [██████████] 100%
+  // Fixed format: [##########] 100%
   // Bar: 10 chars, brackets: 2, space: 1, percent: 4 = 17 visible chars
   const bar = createProgressBar(quota.remainingPercent, 10);
   const percentStr = `${quota.remainingPercent}%`.padStart(4);
   const color = getPercentColor(quota.remainingPercent);
   
-  // Content is 17 visible chars, pad to targetWidth
-  const padding = ' '.repeat(targetWidth - 17);
-  return `${bar} ${color}${percentStr}${COLORS.reset}${padding}`;
+  return `${bar} ${color}${percentStr}${COLORS.reset}`;
 }
 
 /**
@@ -193,7 +188,7 @@ function formatPoolTable(
   
   // Column widths (visible characters only)
   const modelColWidth = 30;
-  const acctColWidth = 22; // [██████████] 100% = 17 chars + 2 padding + 3 for "Account" vs "Acct"
+  const acctColWidth = 19; // [##########] 100% = 17 chars + 2 padding
   
   // Table header
   lines.push(`${COLORS.bright}${poolName}${COLORS.reset} ${COLORS.dim}(${poolDescription})${COLORS.reset}`);
