@@ -1,34 +1,36 @@
 # Usage Guide
 
-## CLI Usage (Standalone)
+## CLI Command: `gquota`
 
-The CLI tool `gquota` provides the richest visual experience with colored progress bars and tables.
+The standalone CLI provides the most detailed visual representation of your quotas.
 
-### Basic Command
+### Syntax
 
 ```bash
-gquota
+gquota [options]
 ```
-
-**Output:**
-Displays a pivot table showing all your accounts and their quota status for each model.
 
 ### Options
 
-| Option | Description |
-|--------|-------------|
-| `--refresh` | Force a fresh fetch from Google API, bypassing the 10-minute cache. |
-| `--account <index>` | Show detailed view for a single account (e.g., `gquota --account 1`). |
-| `--help` | Show help message. |
+| Flag | Alias | Description |
+|------|-------|-------------|
+| `--refresh` | `-r` | **Force Refresh:** Ignore the 10-minute cache and fetch fresh data from Google. Useful if you just switched accounts or want real-time data. |
+| `--account <n>` | `-a` | **Single Account View:** Show detailed breakdown for a specific account index (e.g., `1`, `2`). |
+| `--help` | `-h` | Show help information. |
 
 ### Examples
+
+**Check all accounts (Default):**
+```bash
+gquota
+```
 
 **Force refresh data:**
 ```bash
 gquota --refresh
 ```
 
-**View details for Account #2:**
+**View specific details for Account #2:**
 ```bash
 gquota --account 2
 ```
@@ -37,51 +39,46 @@ gquota --account 2
 
 ## OpenCode Plugin Usage
 
-If installed as a plugin, you can interact with it directly inside OpenCode.
-
-### Slash Command
-
-You can configure a slash command (e.g., `/quota`) in OpenCode to trigger the check.
-
-**Example Task:**
-```
-/quota
-```
-
-OpenCode will execute the tool and summarize the results for you in natural language.
+If installed as a plugin, you can interact with it via OpenCode's chat interface.
 
 ### Natural Language
+Simply ask OpenCode to check your status:
 
-You can ask OpenCode directly:
+> "Check my Google quota."
+> "How much quota do I have left on Gemini?"
+> "Is my Claude quota exhausted?"
 
-> "Check my Google quota status."
-> "Which Gemini models have quota left?"
-> "Are any of my accounts out of quota?"
+### Slash Command
+You can configure a custom slash command in your OpenCode setup (e.g., `/quota`) that maps to the `google_quota` tool.
 
 ---
 
 ## Understanding the Output
 
-### Quota Pools
+The output is organized into a **Pivot Table** for easy comparison.
 
-The output is grouped into two main pools based on how Google manages quotas:
+### 1. Quota Pools
 
-1.  **ANTIGRAVITY QUOTA POOL**:
-    *   Includes **Claude** models (Sonnet, Opus).
-    *   Includes **Gemini 3** models (Flash, Pro).
-    *   *Note: These typically share a common quota limit.*
+Google organizes quotas into specific "pools". We group models accordingly:
 
-2.  **GEMINI CLI QUOTA POOL**:
-    *   Includes **Gemini 2.5** models.
-    *   Includes **Gemini 3 Preview** models.
+*   **ANTIGRAVITY QUOTA POOL**:
+    *   Contains **Claude** models (Opus, Sonnet).
+    *   Contains **Gemini 3** models (Flash, Pro).
+    *   *These models usually share the same "Antigravity" daily limit.*
 
-### Indicators
+*   **GEMINI CLI QUOTA POOL**:
+    *   Contains **Gemini 2.5** models.
+    *   Contains **Gemini 3 Preview** models.
+    *   *These are typically managed under the standard Gemini API quota.*
 
-*   `[██████████] 100%`: **Healthy**. Plenty of quota remaining.
-*   `[██████░░░░]  60%`: **Warning**. Quota is being used up.
-*   `[░░░░░░░░░░]   0%`: **Critical**. Quota exhausted.
+### 2. Status Indicators
 
-### Colors
-*   **Green**: > 80% remaining.
-*   **Yellow**: 50% - 79% remaining.
-*   **Red**: < 50% remaining.
+We use visual progress bars to show remaining quota:
+
+*   `[██████████] 100%` - **Healthy** (Green)
+*   `[██████░░░░]  60%` - **Warning** (Yellow)
+*   `[░░░░░░░░░░]   0%` - **Critical/Exhausted** (Red)
+
+### 3. Reset Time
+
+At the bottom of each pool, you'll see a `Reset: 5h` indicator. This tells you approximately when your daily quota will replenish.

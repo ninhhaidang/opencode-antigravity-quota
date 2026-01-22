@@ -1,57 +1,46 @@
 # opencode-antigravity-quota
 
-**Multi-account Google/Antigravity quota checker for OpenCode.**
+**The ultimate Google Antigravity quota monitoring tool for OpenCode.**
 
 [![npm version](https://img.shields.io/npm/v/opencode-antigravity-quota.svg)](https://www.npmjs.com/package/opencode-antigravity-quota)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-This plugin helps you monitor usage quotas across multiple Google accounts for Antigravity (Gemini & Claude) directly from your terminal or OpenCode interface.
+Monitor your **Gemini** and **Claude** model quotas across multiple Google accounts in real-time. Designed for power users who manage multiple Antigravity accounts.
 
-![Demo](https://via.placeholder.com/800x400?text=Placeholder+for+Screenshot)
+![Demo](https://via.placeholder.com/800x400?text=Antigravity+Quota+CLI+Demo)
 
-## ✨ Features
+## ✨ Highlights
 
-- **Multi-Account:** Checks all your authenticated accounts at once.
-- **Pivot Table View:** Compare models across accounts side-by-side.
-- **Visual Indicators:** Color-coded progress bars and status checks.
-- **Smart Caching:** Reduces API calls with 10-minute caching.
-- **Auto-Refresh:** Handles token refreshing automatically.
+- **Multi-Account:** Instantly check quota status for all your authenticated accounts.
+- **Unified View:** Pivot table layout to compare models side-by-side.
+- **Visual Feedback:** Color-coded progress bars (Green/Yellow/Red) for intuitive health checks.
+- **Smart Caching:** 10-minute caching prevents API rate limits.
+- **CLI & Plugin:** Works as a standalone terminal tool (`gquota`) or inside OpenCode (`/quota`).
 
-## 🚀 Quick Start
+## 📚 Documentation
 
-### Installation
+Detailed guides are available in the [`docs/`](./docs) directory:
+
+| Guide | Description |
+|-------|-------------|
+| [**📥 Installation**](./docs/INSTALLATION.md) | Setup guide for CLI and OpenCode plugin. |
+| [**🚀 Usage**](./docs/USAGE.md) | Commands, options, and how to read the output. |
+| [**🔧 Troubleshooting**](./docs/TROUBLESHOOTING.md) | Fix common errors (Auth, API 403, Cache). |
+| [**🏗️ Architecture**](./docs/ARCHITECTURE.md) | Internal logic and data flow (for developers). |
+
+## ⚡ Quick Start
 
 ```bash
 # Install globally
 npm install -g opencode-antigravity-quota
 
-# OR run directly via npx
-npx opencode-antigravity-quota
-```
-
-### Usage
-
-**CLI Command (Recommended for full view):**
-```bash
+# Check quota
 gquota
 ```
 
-**Options:**
-- `gquota --refresh`: Force refresh data (bypass cache)
-- `gquota --account 1`: Show details for specific account #1
-
-## 📚 Documentation
-
-Detailed documentation is available in the [`docs/`](./docs) directory:
-
-- [**Installation Guide**](./docs/INSTALLATION.md) - Detailed setup instructions.
-- [**Usage Guide**](./docs/USAGE.md) - How to use the CLI and OpenCode plugin.
-- [**Troubleshooting**](./docs/TROUBLESHOOTING.md) - Common errors and fixes.
-- [**Architecture**](./docs/ARCHITECTURE.md) - How it works under the hood.
-
 ## 🤝 Contributing
 
-Contributions are welcome! Please check the [repository](https://github.com/ninhhaidang/opencode-antigravity-quota) for details.
+Contributions are welcome! Please submit Pull Requests to the [GitHub repository](https://github.com/ninhhaidang/opencode-antigravity-quota).
 
 ## 📄 License
 

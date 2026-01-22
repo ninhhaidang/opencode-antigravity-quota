@@ -1,86 +1,75 @@
-# Troubleshooting
+# Troubleshooting Guide
 
-Common issues and how to resolve them.
+This page lists common errors and how to resolve them.
 
-## 1. "No authenticated accounts found"
+## Authentication Errors
 
-**Error:**
-```
-Error: No authenticated accounts found in .../antigravity-accounts.json
-```
-
-**Cause:**
-The plugin cannot find the credentials file created by `opencode-antigravity-auth`.
+### Error: "No authenticated accounts found"
+**Message:** `Error: No authenticated accounts found in .../antigravity-accounts.json`
 
 **Solution:**
-You need to authenticate using the auth plugin first. Run:
-```bash
-opencode auth login
-```
-Follow the browser instructions to log in.
-
-## 2. "Quota fetch failed: 403"
-
-**Error:**
-```
-Error: Quota fetch failed: 403 - Forbidden
-```
-
-**Cause:**
-The Google Cloud Project associated with the account does not have the necessary APIs enabled.
-
-**Solution:**
-1.  Go to the [Google Cloud Console](https://console.cloud.google.com/).
-2.  Select the project ID shown in the error (or list it via `gquota --account <n>`).
-3.  Navigate to **APIs & Services > Library**.
-4.  Search for **"Cloud AI Companion API"** (or Antigravity API).
-5.  Click **Enable**.
-
-## 3. "Token refresh failed"
-
-**Error:**
-```
-Error: Token refresh failed
-```
-
-**Cause:**
-The refresh token for the account has expired or been revoked.
-
-**Solution:**
-Re-authenticate the account:
+The plugin cannot find credentials. You must log in using the Auth plugin:
 ```bash
 opencode auth login
 ```
 
-## 4. Output Alignment Issues
-
-**Issue:**
-Columns in the table look misaligned (e.g., lines are broken or shifted).
-
-**Cause:**
-This is usually due to:
-*   **Font:** Your terminal font doesn't support the Unicode block characters (`█`, `░`) or box-drawing characters (`│`, `─`) correctly.
-*   **Width:** The terminal window is too narrow.
+### Error: "Token refresh failed"
+**Message:** `Error: Token refresh failed` or `400 Bad Request`
 
 **Solution:**
-*   Try using a Nerd Font (e.g., FiraCode, JetBrains Mono).
-*   Widen your terminal window.
-*   The plugin uses fixed-width formatting (19 chars for account columns), so standard monospaced fonts should work fine.
+Your refresh token has expired or was revoked. Re-authenticate:
+```bash
+opencode auth login
+```
 
-## 5. Cache Issues
+---
 
-**Issue:**
-Data seems stale or outdated.
+## API Errors
+
+### Error: "Quota fetch failed: 403"
+**Message:** `403 Forbidden` or `Permission Denied`
 
 **Cause:**
-The plugin caches results for 10 minutes to avoid hitting API rate limits.
+The Google Cloud Project linked to your account does not have the required API enabled.
 
 **Solution:**
-Force a refresh:
+1.  Identify the Project ID (shown in `gquota --account <n>`).
+2.  Go to [Google Cloud Console](https://console.cloud.google.com/).
+3.  Select that project.
+4.  Navigate to **APIs & Services > Library**.
+5.  Search for **"Cloud AI Companion API"** (or "Antigravity API").
+6.  Click **Enable**.
+
+---
+
+## Display Issues
+
+### Misaligned Table Columns
+**Symptom:** The table lines look broken or columns don't line up.
+
+**Solution:**
+1.  **Font:** Ensure your terminal uses a Monospaced font (e.g., Fira Code, Consolas, JetBrains Mono).
+2.  **Width:** Make sure your terminal window is wide enough (at least 100 characters).
+3.  **Characters:** The plugin uses Unicode block characters (`█`). If these don't render, try a different terminal emulator (e.g., Windows Terminal, iTerm2).
+
+---
+
+## Cache Issues
+
+### Stale Data
+**Symptom:** Quota shows 100% but you know you just used it.
+
+**Cause:**
+To protect your API limits, we cache results for 10 minutes.
+
+**Solution:**
+Use the refresh flag to force an update:
 ```bash
 gquota --refresh
 ```
 
-To manually clear the cache file:
-*   **Windows:** Delete `%LOCALAPPDATA%\opencode\quota-cache.json`
-*   **Mac/Linux:** Delete `~/.cache/opencode/quota-cache.json`
+### Clearing Cache Manually
+If the cache file is corrupted, you can delete it:
+
+*   **Windows:** `%LOCALAPPDATA%\opencode\quota-cache.json`
+*   **macOS/Linux:** `~/.cache/opencode/quota-cache.json`
