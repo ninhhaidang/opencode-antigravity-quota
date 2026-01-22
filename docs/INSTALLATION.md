@@ -14,36 +14,50 @@ Before starting, ensure you have the following installed:
 
 ---
 
-## 1. Global Installation (Recommended)
+## 1. Install from Source (Global CLI)
 
-Installing globally allows you to use the `gquota` command from any terminal window.
+Since this package is currently in development, you need to install it from source.
 
 ```bash
-# Install via npm
-npm install -g opencode-antigravity-quota
+# 1. Clone the repository
+git clone https://github.com/ninhhaidang/opencode-antigravity-quota.git
+cd opencode-antigravity-quota
 
-# Verify installation
+# 2. Install dependencies
+npm install
+
+# 3. Build the project
+npm run build
+
+# 4. Link globally to use 'gquota' command
+npm link
+```
+
+Verify the installation:
+```bash
 gquota --help
 ```
 
 ## 2. Install as OpenCode Plugin
 
-To use the quota checker directly inside the OpenCode AI interface (Chat or Slash commands).
+To use the quota checker directly inside the OpenCode AI interface.
 
-### Step 1: Install Package
-Navigate to your OpenCode configuration directory and install the package.
+### Step 1: Link the Package
+First, follow the steps in **Section 1** to build the project. Then, navigate to your OpenCode configuration directory and link the local package.
 
 **Windows (PowerShell):**
 ```powershell
 cd $env:USERPROFILE\.config\opencode
-npm install opencode-antigravity-quota
+npm install D:\path\to\opencode-antigravity-quota
 ```
 
 **macOS / Linux:**
 ```bash
 cd ~/.config/opencode
-npm install opencode-antigravity-quota
+npm install /path/to/opencode-antigravity-quota
 ```
+
+*(Replace `/path/to/...` with the actual path where you cloned the repository)*
 
 ### Step 2: Configure Plugin
 Add the plugin to your `opencode.json` configuration file.
@@ -54,25 +68,6 @@ Add the plugin to your `opencode.json` configuration file.
     "opencode-antigravity-quota"
   ]
 }
-```
-
-## 3. Install from Source (Development)
-
-For developers who want to modify or contribute to the project.
-
-```bash
-# Clone repository
-git clone https://github.com/ninhhaidang/opencode-antigravity-quota.git
-cd opencode-antigravity-quota
-
-# Install dependencies
-npm install
-
-# Build the project
-npm run build
-
-# Link for local development
-npm link
 ```
 
 ## Next Steps

@@ -30,11 +30,19 @@ Detailed guides are available in the [`docs/`](./docs) directory:
 
 ## ⚡ Quick Start
 
-```bash
-# Install globally
-npm install -g opencode-antigravity-quota
+### Install from Source
 
-# Check quota
+```bash
+# Clone the repository
+git clone https://github.com/ninhhaidang/opencode-antigravity-quota.git
+cd opencode-antigravity-quota
+
+# Install & Link
+npm install
+npm run build
+npm link
+
+# Run
 gquota
 ```
 
