@@ -157,10 +157,13 @@ function getModelQuota(result: AccountQuotaResult, modelName: string): ModelQuot
 
 /**
  * Format a cell in the pivot table (fixed width, accounts for ANSI codes)
+ * Target visible width: 19 chars (acctColWidth - 2 - 1 trailing space in template)
  */
-function formatCell(quota: ModelQuota | undefined): string {
+function formatCell(quota: ModelQuota | undefined, targetWidth: number = 19): string {
   if (!quota) {
-    return `${COLORS.dim}N/A${COLORS.reset}`.padEnd(19 + 9); // 9 = ANSI code length
+    // "N/A" = 3 chars, need to pad to targetWidth
+    const padding = ' '.repeat(targetWidth - 3);
+    return `${COLORS.dim}N/A${COLORS.reset}${padding}`;
   }
   
   // Fixed format: [██████████] 100%
@@ -169,8 +172,9 @@ function formatCell(quota: ModelQuota | undefined): string {
   const percentStr = `${quota.remainingPercent}%`.padStart(4);
   const color = getPercentColor(quota.remainingPercent);
   
-  // Return fixed-width content
-  return `${bar} ${color}${percentStr}${COLORS.reset}`;
+  // Content is 17 visible chars, pad to targetWidth
+  const padding = ' '.repeat(targetWidth - 17);
+  return `${bar} ${color}${percentStr}${COLORS.reset}${padding}`;
 }
 
 /**
