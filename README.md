@@ -7,7 +7,7 @@
 
 Monitor your **Gemini** and **Claude** model quotas across multiple Google accounts in real-time. Designed for power users who manage multiple Antigravity accounts.
 
-![Demo](https://via.placeholder.com/800x400?text=Antigravity+Quota+CLI+Demo)
+![Antigravity Quota Demo](./docs/assets/demo.png)
 
 ## Highlights
 
