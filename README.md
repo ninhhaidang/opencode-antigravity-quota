@@ -23,13 +23,24 @@ This plugin requires:
 - At least one authenticated Google account
 - Node.js >= 20.0.0
 
-### As NPM Package
+### Quick Install (Recommended)
 
 ```bash
-npm install -g opencode-antigravity-quota
+# Clone and build
+git clone https://github.com/ninhhaidang/opencode-antigravity-quota.git
+cd opencode-antigravity-quota
+npm install
+npm run build
+
+# Install globally for CLI command
+npm link
+
+# Install as OpenCode plugin
+cd ~/.config/opencode
+npm install /path/to/opencode-antigravity-quota
 ```
 
-Then add to your OpenCode config (`~/.config/opencode/opencode.json`):
+Then add to `~/.config/opencode/opencode.json`:
 
 ```json
 {
@@ -38,39 +49,91 @@ Then add to your OpenCode config (`~/.config/opencode/opencode.json`):
 }
 ```
 
-### From Source
+### As NPM Package (When Published)
 
-1. Clone this repo:
 ```bash
-git clone https://github.com/ninhhaidang/opencode-antigravity-quota.git
-cd opencode-antigravity-quota
+# Install globally
+npm install -g opencode-antigravity-quota
+
+# Install as OpenCode plugin
+cd ~/.config/opencode
+npm install opencode-antigravity-quota
 ```
 
-2. Build:
-```bash
-npm install
-npm run build
-```
-
-3. Link globally:
-```bash
-npm link
-```
-
-4. Add to OpenCode config (same as above)
+Then add to OpenCode config (same as above)
 
 ## Usage
 
-### Via Slash Command
+### ⭐ Recommended: Standalone CLI Command
+
+For the **best experience** with full colors and progress bars, use the standalone CLI:
+
+```bash
+# After installation with npm link or global install:
+gquota
+
+# Or run directly:
+node D:\ninhhaidang\Workspace\opencode-antigravity-quota\bin\cli.mjs
+```
+
+**Output:**
+```
+Google/Antigravity Quota - Multi-Account
+════════════════════════════════════════════════════════════
+
+Account #1: ninhhaidangg@gmail.com
+  Project: opencode-antigravity-485009
+  Tier: Antigravity
+  Last used: 3 minutes ago
+
+  Gemini Models:
+    ✅ Gemini 2.5 Flash
+       [████████████████████] 100% remaining
+       Resets in: 5h
+
+    ✅ Gemini 3 Pro (High)
+       [████████████████████] 100% remaining
+       Resets in: 5h
+
+  Claude Models:
+    ✅ Claude Sonnet 4.5
+       [████████████████████] 100% remaining
+       Resets in: 4h 56m
+
+────────────────────────────────────────────────────────────
+...
+════════════════════════════════════════════════════════════
+Summary:
+✅ 3/3 accounts healthy
+💾 Cache valid for: 8 minutes
+```
+
+### Via OpenCode Slash Command
 
 Create `~/.config/opencode/commands/gquota.md`:
 
 ```markdown
 ---
-description: Check Google/Antigravity quota for all accounts
+description: Check Google/Antigravity quota for all accounts  
 ---
 
-Check my Google/Antigravity quota using the google_quota tool.
+Use the google_quota tool to check my quota.
+```
+
+Then run in OpenCode:
+```
+/gquota
+```
+
+**Note:** OpenCode's LLM will **summarize** the quota info in natural language. For full formatted output with colors, use the standalone CLI above.
+
+### Via Natural Language (in OpenCode)
+
+In OpenCode chat:
+```
+> Check my Google quota
+> How much Gemini quota do I have left?
+> Show me my Claude model quotas
 ```
 
 Then run in OpenCode:
@@ -87,54 +150,31 @@ In OpenCode chat:
 > Show me my Claude model quotas
 ```
 
-## Output Example
+## CLI vs OpenCode Plugin
 
+### CLI Command (Full Formatted Output)
+```bash
+gquota
 ```
-Google/Antigravity Quota - Multi-Account
-════════════════════════════════════════════════════════════
+Shows **colored progress bars** and full formatting in terminal.
 
-Account #1: ninhhaidangg@gmail.com
-  Project: opencode-antigravity-485009
-  Tier: GEMINI_1_5_PRO_AND_EXPERIMENTAL
-  Last used: 2 hours ago
-
-  Gemini Models:
-    ✅ Gemini 3 Pro
-       [████████████████████] 100% remaining
-       Resets in: 23h 45m
-
-    ⚠️  Gemini 3 Flash
-       [████████░░░░░░░░░░░░] 42% remaining
-       Resets in: 5h 12m
-
-  Claude Models:
-    ✅ Claude Sonnet 4.5
-       [██████████████████░░] 95% remaining
-       Resets in: 1d 3h
-
-────────────────────────────────────────────────────────────
-
-Account #2: ninhhailongg@gmail.com
-  Project: coherent-window-485009-f4
-  Tier: GEMINI_1_5_PRO_AND_EXPERIMENTAL
-  Last used: 5 hours ago
-
-  ...
-
-────────────────────────────────────────────────────────────
-
-Account #3: bonglantrungmuoj@gmail.com
-  ⚠️  Status: Could not fetch quota
-  Reason: Token refresh failed: 401 - invalid_grant
-  Last used: 3 days ago
-  Suggestion: Re-authenticate with 'opencode auth login'
-
-════════════════════════════════════════════════════════════
-Summary:
-✅ 2/3 accounts healthy
-❌ 1 account needs attention
-💾 Cache valid for: 8 minutes
+### OpenCode Plugin (LLM Summary)
 ```
+/gquota
+```
+OpenCode's LLM **interprets and summarizes** the quota info:
+```
+Your Antigravity quota check is complete! Here's a summary:
+
+Quota Status:
+- All accounts at 100% quota for both Claude and Gemini models
+- Quotas reset in approximately 5 hours
+- 3 accounts available: ninhhaidangg, ninhhailongg, bonglantrungmuoj
+
+Your quota is fully available and all systems are ready to use!
+```
+
+**Recommendation:** Use **CLI** for detailed quota monitoring, use **OpenCode plugin** for quick checks during development.
 
 ## Configuration
 

@@ -5,6 +5,10 @@
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "type": "module",
+  "bin": {
+    "gquota": "./bin/cli.mjs",
+    "opencode-antigravity-quota": "./bin/cli.mjs"
+  },
   "keywords": [
     "opencode",
     "opencode-plugin",
@@ -39,6 +43,7 @@
   },
   "files": [
     "dist/",
+    "bin/",
     "README.md",
     "LICENSE"
   ]

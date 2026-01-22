@@ -2,11 +2,15 @@
  * Authentication utilities for opencode-antigravity-quota plugin
  */
 
-import * as fs from 'fs';
-import * as path from 'path';
-import * as os from 'os';
-import type { AntigravityAccountsFile, TokenResponse } from './types.js';
-import { GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, TOKEN_URL } from './constants.js';
+import * as fs from "fs";
+import * as path from "path";
+import * as os from "os";
+import type { AntigravityAccountsFile, TokenResponse } from "./types.js";
+import {
+  GOOGLE_CLIENT_ID,
+  GOOGLE_CLIENT_SECRET,
+  TOKEN_URL,
+} from "./constants.js";
 
 /**
  * Get the path to antigravity-accounts.json file
@@ -16,12 +20,14 @@ import { GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, TOKEN_URL } from './constants.j
  */
 export function getAccountsFilePath(): string {
   const platform = os.platform();
-  if (platform === 'win32') {
-    const appData = process.env.APPDATA || path.join(os.homedir(), 'AppData', 'Roaming');
-    return path.join(appData, 'opencode', 'antigravity-accounts.json');
+  if (platform === "win32") {
+    const appData =
+      process.env.APPDATA || path.join(os.homedir(), "AppData", "Roaming");
+    return path.join(appData, "opencode", "antigravity-accounts.json");
   } else {
-    const configHome = process.env.XDG_CONFIG_HOME || path.join(os.homedir(), '.config');
-    return path.join(configHome, 'opencode', 'antigravity-accounts.json');
+    const configHome =
+      process.env.XDG_CONFIG_HOME || path.join(os.homedir(), ".config");
+    return path.join(configHome, "opencode", "antigravity-accounts.json");
   }
 }
 
@@ -35,10 +41,10 @@ export function readAccountsFile(): AntigravityAccountsFile | null {
     if (!fs.existsSync(filePath)) {
       return null;
     }
-    const content = fs.readFileSync(filePath, 'utf-8');
+    const content = fs.readFileSync(filePath, "utf-8");
     return JSON.parse(content);
   } catch (error) {
-    console.error('Failed to read accounts file:', error);
+    console.error("Failed to read accounts file:", error);
     return null;
   }
 }
@@ -48,18 +54,20 @@ export function readAccountsFile(): AntigravityAccountsFile | null {
  * @param refreshToken The refresh token from antigravity-accounts.json
  * @returns Token response with new access token
  */
-export async function refreshAccessToken(refreshToken: string): Promise<TokenResponse> {
+export async function refreshAccessToken(
+  refreshToken: string,
+): Promise<TokenResponse> {
   const params = new URLSearchParams({
     client_id: GOOGLE_CLIENT_ID,
     client_secret: GOOGLE_CLIENT_SECRET,
     refresh_token: refreshToken,
-    grant_type: 'refresh_token',
+    grant_type: "refresh_token",
   });
 
   const response = await fetch(TOKEN_URL, {
-    method: 'POST',
+    method: "POST",
     headers: {
-      'Content-Type': 'application/x-www-form-urlencoded',
+      "Content-Type": "application/x-www-form-urlencoded",
     },
     body: params.toString(),
   });
