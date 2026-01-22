@@ -14,25 +14,6 @@ Before starting, ensure you have the following installed:
 
 ---
 
-## AI Agent Quick Install
-
-If you are using an AI coding assistant (like OpenCode), you can ask it to perform the installation for you.
-
-**Copy and paste this prompt to your AI:**
-
-```text
-Please install the 'opencode-antigravity-quota' plugin for me.
-The repository URL is: https://github.com/ninhhaidang/opencode-antigravity-quota.git
-
-Follow these steps:
-1. Clone the repository to my workspace.
-2. Install dependencies (npm install) and build (npm run build).
-3. Link it globally (npm link) so I can use the 'gquota' command.
-4. Install it as a plugin in my OpenCode config folder.
-```
-
----
-
 ## 1. Install from Source (Global CLI)
 
 Since this package is currently in development, you need to install it from source.
