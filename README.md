@@ -9,7 +9,7 @@ Monitor your **Gemini** and **Claude** model quotas across multiple Google accou
 
 ![Demo](https://via.placeholder.com/800x400?text=Antigravity+Quota+CLI+Demo)
 
-## ✨ Highlights
+## Highlights
 
 - **Multi-Account:** Instantly check quota status for all your authenticated accounts.
 - **Unified View:** Pivot table layout to compare models side-by-side.
@@ -17,20 +17,20 @@ Monitor your **Gemini** and **Claude** model quotas across multiple Google accou
 - **Smart Caching:** 10-minute caching prevents API rate limits.
 - **CLI & Plugin:** Works as a standalone terminal tool (`gquota`) or inside OpenCode (`/quota`).
 
-## 📚 Documentation
+## Documentation
 
 Detailed guides are available in the [`docs/`](./docs) directory:
 
 | Guide | Description |
 |-------|-------------|
-| [**📥 Installation**](./docs/INSTALLATION.md) | Setup guide for CLI and OpenCode plugin. |
-| [**🚀 Usage**](./docs/USAGE.md) | Commands, options, and how to read the output. |
-| [**🔧 Troubleshooting**](./docs/TROUBLESHOOTING.md) | Fix common errors (Auth, API 403, Cache). |
-| [**🏗️ Architecture**](./docs/ARCHITECTURE.md) | Internal logic and data flow (for developers). |
+| [**Installation**](./docs/INSTALLATION.md) | Setup guide for CLI and OpenCode plugin. |
+| [**Usage**](./docs/USAGE.md) | Commands, options, and how to read the output. |
+| [**Troubleshooting**](./docs/TROUBLESHOOTING.md) | Fix common errors (Auth, API 403, Cache). |
+| [**Architecture**](./docs/ARCHITECTURE.md) | Internal logic and data flow (for developers). |
 
-## ⚡ Quick Start
+## Quick Start
 
-> **Tip:** Too lazy to type commands? Try the [**🤖 AI Agent Quick Install**](./docs/INSTALLATION.md#ai-agent-quick-install).
+> **Tip:** Too lazy to type commands? Try the [**AI Agent Quick Install**](./docs/INSTALLATION.md#ai-agent-quick-install).
 
 ### Install from Source
 
@@ -48,10 +48,10 @@ npm link
 gquota
 ```
 
-## 🤝 Contributing
+## Contributing
 
 Contributions are welcome! Please submit Pull Requests to the [GitHub repository](https://github.com/ninhhaidang/opencode-antigravity-quota).
 
-## 📄 License
+## License
 
 MIT © [NinhHaiDang](https://github.com/ninhhaidang)

@@ -14,7 +14,7 @@ Before starting, ensure you have the following installed:
 
 ---
 
-## 🤖 AI Agent Quick Install
+## AI Agent Quick Install
 
 If you are using an AI coding assistant (like OpenCode), you can ask it to perform the installation for you.
 
