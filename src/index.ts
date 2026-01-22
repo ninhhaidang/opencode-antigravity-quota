@@ -12,7 +12,7 @@ import { tool } from '@opencode-ai/plugin';
 import { readAccountsFile } from './auth.js';
 import { getAccountQuota } from './quota.js';
 import { readCache, writeCache, formatCacheAge } from './cache.js';
-import { formatQuotaOutput } from './format.js';
+import { formatTableView } from './format.js';
 import type { AccountQuotaResult } from './types.js';
 
 /**
@@ -31,13 +31,13 @@ const AntigravityQuotaPlugin: Plugin = async () => {
           if (cache) {
             const results = Object.values(cache.data);
             const cacheAge = formatCacheAge(cache.timestamp);
-            return formatQuotaOutput(results, cacheAge);
+            return formatTableView(results, cacheAge);
           }
           
           // 2. Read accounts file
           const accountsFile = readAccountsFile();
           if (!accountsFile || accountsFile.accounts.length === 0) {
-            return 'Error: No authenticated accounts found.\n\nPlease authenticate with:\n  opencode auth login\n\nMake sure you are using the opencode-antigravity-auth plugin.';
+            return 'Error: No authenticated accounts found.\\n\\nPlease authenticate with:\\n  opencode auth login\\n\\nMake sure you are using the opencode-antigravity-auth plugin.';
           }
           
           // 3. Fetch quota for all accounts (in parallel for speed)
@@ -52,8 +52,8 @@ const AntigravityQuotaPlugin: Plugin = async () => {
           }
           writeCache(cacheData);
           
-          // 5. Format and return output
-          return formatQuotaOutput(results);
+          // 5. Format and return output (use table view for compact display)
+          return formatTableView(results);
         },
       }),
     },
