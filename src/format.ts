@@ -8,6 +8,7 @@ import { COLORS } from './constants.js';
 /**
  * Create a colored progress bar for quota visualization
  * Fixed width output with consistent ANSI codes
+ * Using ASCII characters for consistent width across terminals
  */
 function createProgressBar(percent: number, width: number = 10): string {
   const filled = Math.round((percent / 100) * width);
@@ -18,9 +19,9 @@ function createProgressBar(percent: number, width: number = 10): string {
   if (percent < 50) color = COLORS.red;
   else if (percent < 80) color = COLORS.yellow;
   
-  // Use single color for entire bar to ensure consistent ANSI code length
-  const filledPart = '█'.repeat(filled);
-  const emptyPart = '░'.repeat(empty);
+  // Use ASCII characters for consistent width: # for filled, - for empty
+  const filledPart = '#'.repeat(filled);
+  const emptyPart = '-'.repeat(empty);
   
   return `${color}[${filledPart}${emptyPart}]${COLORS.reset}`;
 }
