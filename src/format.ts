@@ -1,5 +1,5 @@
 /**
- * Output formatting with colors and progress bars
+ * Output formatting with pivot table display
  */
 
 import type { AccountQuotaResult, QuotaSummary, ModelQuota } from './types.js';
@@ -8,21 +8,34 @@ import { COLORS } from './constants.js';
 /**
  * Create a colored progress bar for quota visualization
  */
-function createProgressBar(percent: number, width: number = 20): string {
+function createProgressBar(percent: number, width: number = 12): string {
   const filled = Math.round((percent / 100) * width);
   const empty = width - filled;
-  return `[${COLORS.green}${'█'.repeat(filled)}${COLORS.gray}${'░'.repeat(empty)}${COLORS.reset}]`;
+  
+  // Color based on percentage
+  let color = COLORS.green;
+  if (percent < 50) color = COLORS.red;
+  else if (percent < 80) color = COLORS.yellow;
+  
+  return `[${color}${'█'.repeat(filled)}${COLORS.gray}${'░'.repeat(empty)}${COLORS.reset}]`;
 }
 
 /**
- * Get status icon and color based on quota health
+ * Get color for percentage based on threshold
  */
-function getStatusIcon(status: 'healthy' | 'warning' | 'critical'): string {
-  switch (status) {
-    case 'healthy': return `${COLORS.green}✅${COLORS.reset}`;
-    case 'warning': return `${COLORS.yellow}⚠️${COLORS.reset}`;
-    case 'critical': return `${COLORS.red}🔴${COLORS.reset}`;
-  }
+function getPercentColor(percent: number): string {
+  if (percent < 50) return COLORS.red;
+  if (percent < 80) return COLORS.yellow;
+  return COLORS.green;
+}
+
+/**
+ * Format percentage with color and padding
+ */
+function formatPercent(percent: number): string {
+  const color = getPercentColor(percent);
+  const percentStr = `${percent}%`.padStart(4);
+  return `${color}${percentStr}${COLORS.reset}`;
 }
 
 /**
@@ -42,71 +55,6 @@ function formatLastUsed(timestamp: number): string {
 }
 
 /**
- * Format a single account's quota result
- */
-function formatAccountResult(result: AccountQuotaResult, index: number): string {
-  const lines: string[] = [];
-  
-  lines.push(`${COLORS.bright}Account #${index + 1}: ${result.email}${COLORS.reset}`);
-  
-  if (!result.success) {
-    lines.push(`  ${COLORS.red}❌ Status: Could not fetch quota${COLORS.reset}`);
-    lines.push(`  ${COLORS.dim}Reason: ${result.error}${COLORS.reset}`);
-    lines.push(`  ${COLORS.dim}Last used: ${formatLastUsed(result.lastUsed)}${COLORS.reset}`);
-    if (result.suggestion) {
-      lines.push(`  ${COLORS.cyan}Suggestion: ${result.suggestion}${COLORS.reset}`);
-    }
-    return lines.join('\n');
-  }
-  
-  lines.push(`  Project: ${COLORS.dim}${result.projectId}${COLORS.reset}`);
-  lines.push(`  Tier: ${COLORS.dim}${result.tier}${COLORS.reset}`);
-  lines.push(`  Last used: ${COLORS.dim}${formatLastUsed(result.lastUsed)}${COLORS.reset}`);
-  lines.push('');
-  
-  // Group models by quota pool
-  // Antigravity Quota: Claude + Gemini 3 (non-preview)
-  // Gemini CLI Quota: Gemini 2.5 + Gemini 3 preview
-  
-  const antigravityModels = result.models?.filter(m => {
-    // Claude models use Antigravity quota
-    if (m.name.includes('claude')) return true;
-    // Gemini 3 non-preview models use Antigravity quota
-    if (m.name.startsWith('gemini-3-') && !m.name.includes('preview')) return true;
-    return false;
-  }) || [];
-  
-  const geminiCliModels = result.models?.filter(m => {
-    // Gemini 2.5 models use Gemini CLI quota
-    if (m.name.startsWith('gemini-2.5-')) return true;
-    // Gemini 3 preview models use Gemini CLI quota
-    if (m.name.includes('preview')) return true;
-    return false;
-  }) || [];
-  
-  if (antigravityModels.length > 0) {
-    lines.push(`  ${COLORS.bright}${COLORS.cyan}Antigravity Quota${COLORS.reset} ${COLORS.dim}(Claude + Gemini 3)${COLORS.reset}`);
-    for (const model of antigravityModels) {
-      lines.push(`    ${getStatusIcon(model.status)} ${model.displayName}`);
-      lines.push(`       ${createProgressBar(model.remainingPercent)} ${model.remainingPercent}% remaining`);
-      lines.push(`       ${COLORS.dim}Resets in: ${model.resetIn}${COLORS.reset}`);
-    }
-    lines.push('');
-  }
-  
-  if (geminiCliModels.length > 0) {
-    lines.push(`  ${COLORS.bright}${COLORS.cyan}Gemini CLI Quota${COLORS.reset} ${COLORS.dim}(Gemini 2.5 + 3 Preview)${COLORS.reset}`);
-    for (const model of geminiCliModels) {
-      lines.push(`    ${getStatusIcon(model.status)} ${model.displayName}`);
-      lines.push(`       ${createProgressBar(model.remainingPercent)} ${model.remainingPercent}% remaining`);
-      lines.push(`       ${COLORS.dim}Resets in: ${model.resetIn}${COLORS.reset}`);
-    }
-  }
-  
-  return lines.join('\n');
-}
-
-/**
  * Generate summary statistics from results
  */
 function generateSummary(results: AccountQuotaResult[]): QuotaSummary {
@@ -123,7 +71,7 @@ function generateSummary(results: AccountQuotaResult[]): QuotaSummary {
       continue;
     }
     
-    const hasWarning = result.models?.some(m => m.status === 'warning' || m.status === 'critical');
+    const hasWarning = result.models?.some(m => m.remainingPercent < 80);
     if (hasWarning) {
       summary.warningAccounts++;
     } else {
@@ -138,145 +86,256 @@ function generateSummary(results: AccountQuotaResult[]): QuotaSummary {
  * Format summary section
  */
 function formatSummary(summary: QuotaSummary, cacheAge?: string): string {
-  const lines: string[] = [];
+  const parts: string[] = [];
   
-  lines.push(`${COLORS.bright}Summary:${COLORS.reset}`);
+  if (summary.healthyAccounts === summary.totalAccounts) {
+    parts.push(`${COLORS.green}${summary.totalAccounts}/${summary.totalAccounts} accounts healthy${COLORS.reset}`);
+  } else {
+    if (summary.healthyAccounts > 0) {
+      parts.push(`${COLORS.green}${summary.healthyAccounts} healthy${COLORS.reset}`);
+    }
+    if (summary.warningAccounts > 0) {
+      parts.push(`${COLORS.yellow}${summary.warningAccounts} warning${COLORS.reset}`);
+    }
+    if (summary.failedAccounts > 0) {
+      parts.push(`${COLORS.red}${summary.failedAccounts} failed${COLORS.reset}`);
+    }
+  }
   
-  if (summary.healthyAccounts > 0) {
-    lines.push(`${COLORS.green}✅ ${summary.healthyAccounts}/${summary.totalAccounts} accounts healthy${COLORS.reset}`);
-  }
-  if (summary.warningAccounts > 0) {
-    lines.push(`${COLORS.yellow}⚠️  ${summary.warningAccounts} account${summary.warningAccounts !== 1 ? 's' : ''} with warnings${COLORS.reset}`);
-  }
-  if (summary.failedAccounts > 0) {
-    lines.push(`${COLORS.red}❌ ${summary.failedAccounts} account${summary.failedAccounts !== 1 ? 's' : ''} need attention${COLORS.reset}`);
-  }
-  
+  let result = `Summary: ${parts.join(', ')}`;
   if (cacheAge) {
-    lines.push(`${COLORS.dim}💾 Cache valid for: ${cacheAge}${COLORS.reset}`);
+    result += ` ${COLORS.dim}• Cache: ${cacheAge}${COLORS.reset}`;
   }
   
-  return lines.join('\n');
+  return result;
 }
 
 /**
- * Calculate average quota for a pool across models
+ * Get all unique model names across all accounts
  */
-function getPoolQuota(models: ModelQuota[]): { percent: number; total: number; status: 'healthy' | 'warning' | 'critical' } {
-  if (models.length === 0) return { percent: 0, total: 0, status: 'critical' };
-  
-  const avgPercent = Math.round(
-    models.reduce((sum, m) => sum + m.remainingPercent, 0) / models.length
-  );
-  
-  let status: 'healthy' | 'warning' | 'critical' = 'healthy';
-  if (avgPercent < 50) status = 'critical';
-  else if (avgPercent < 80) status = 'warning';
-  
-  return { percent: avgPercent, total: models.length, status };
+function getAllModelNames(results: AccountQuotaResult[]): string[] {
+  const modelSet = new Set<string>();
+  for (const result of results) {
+    if (result.models) {
+      for (const model of result.models) {
+        modelSet.add(model.name);
+      }
+    }
+  }
+  return Array.from(modelSet).sort();
 }
 
 /**
- * Format table view (compact overview)
+ * Group models by quota pool
  */
-export function formatTableView(results: AccountQuotaResult[], cacheAge?: string): string {
+function groupModelsByPool(modelNames: string[]): { antigravity: string[]; geminiCli: string[] } {
+  const antigravity: string[] = [];
+  const geminiCli: string[] = [];
+  
+  for (const name of modelNames) {
+    if (name.includes('claude') || (name.startsWith('gemini-3-') && !name.includes('preview'))) {
+      antigravity.push(name);
+    } else if (name.startsWith('gemini-2.5-') || name.includes('preview')) {
+      geminiCli.push(name);
+    }
+  }
+  
+  return { antigravity, geminiCli };
+}
+
+/**
+ * Get model quota for a specific account
+ */
+function getModelQuota(result: AccountQuotaResult, modelName: string): ModelQuota | undefined {
+  return result.models?.find(m => m.name === modelName);
+}
+
+/**
+ * Format a cell in the pivot table
+ */
+function formatCell(quota: ModelQuota | undefined, cellWidth: number): string {
+  if (!quota) {
+    return `${COLORS.dim}${'N/A'.padEnd(cellWidth - 2)}${COLORS.reset}`;
+  }
+  
+  const bar = createProgressBar(quota.remainingPercent, 10);
+  const percent = formatPercent(quota.remainingPercent);
+  // Account for ANSI codes in length calculation
+  const content = `${bar} ${percent}`;
+  return content;
+}
+
+/**
+ * Format pivot table for a quota pool
+ */
+function formatPoolTable(
+  poolName: string,
+  poolDescription: string,
+  modelNames: string[],
+  results: AccountQuotaResult[],
+  resetTime: string
+): string[] {
+  const lines: string[] = [];
+  const numAccounts = results.length;
+  
+  // Column widths
+  const modelColWidth = 30;
+  const acctColWidth = 21; // [████████████] 100%
+  
+  // Table header
+  lines.push(`${COLORS.bright}${poolName}${COLORS.reset} ${COLORS.dim}(${poolDescription})${COLORS.reset}`);
+  
+  // Build header row
+  let headerBorder = `┌${'─'.repeat(modelColWidth)}`;
+  let headerRow = `│ ${'Model'.padEnd(modelColWidth - 2)} `;
+  for (let i = 0; i < numAccounts; i++) {
+    headerBorder += `┬${'─'.repeat(acctColWidth)}`;
+    headerRow += `│ ${`Acct #${i + 1}`.padEnd(acctColWidth - 2)} `;
+  }
+  headerBorder += '┐';
+  headerRow += '│';
+  
+  lines.push(headerBorder);
+  lines.push(headerRow);
+  
+  // Separator row
+  let sepRow = `├${'─'.repeat(modelColWidth)}`;
+  for (let i = 0; i < numAccounts; i++) {
+    sepRow += `┼${'─'.repeat(acctColWidth)}`;
+  }
+  sepRow += '┤';
+  lines.push(sepRow);
+  
+  // Data rows
+  for (const modelName of modelNames) {
+    // Get display name from first account that has this model
+    let displayName = modelName;
+    for (const result of results) {
+      const quota = getModelQuota(result, modelName);
+      if (quota) {
+        displayName = quota.displayName;
+        break;
+      }
+    }
+    
+    // Truncate if too long
+    if (displayName.length > modelColWidth - 3) {
+      displayName = displayName.substring(0, modelColWidth - 5) + '...';
+    }
+    
+    let row = `│ ${displayName.padEnd(modelColWidth - 2)} `;
+    
+    for (const result of results) {
+      if (!result.success) {
+        row += `│ ${COLORS.red}${'ERROR'.padEnd(acctColWidth - 2)}${COLORS.reset} `;
+      } else {
+        const quota = getModelQuota(result, modelName);
+        row += `│ ${formatCell(quota, acctColWidth)} `;
+      }
+    }
+    row += '│';
+    lines.push(row);
+  }
+  
+  // Bottom border
+  let bottomBorder = `└${'─'.repeat(modelColWidth)}`;
+  for (let i = 0; i < numAccounts; i++) {
+    bottomBorder += `┴${'─'.repeat(acctColWidth)}`;
+  }
+  bottomBorder += '┘';
+  lines.push(bottomBorder);
+  
+  // Reset time
+  lines.push(`${COLORS.dim}Reset: ${resetTime}${COLORS.reset}`);
+  
+  return lines;
+}
+
+/**
+ * Get reset time info for a pool
+ */
+function getPoolResetTime(results: AccountQuotaResult[], modelNames: string[]): string {
+  // Get unique reset times
+  const resetTimes = new Set<string>();
+  
+  for (const result of results) {
+    if (!result.models) continue;
+    for (const model of result.models) {
+      if (modelNames.includes(model.name) && model.resetIn) {
+        resetTimes.add(model.resetIn);
+      }
+    }
+  }
+  
+  const times = Array.from(resetTimes);
+  if (times.length === 0) return 'N/A';
+  if (times.length === 1) return times[0];
+  return times.slice(0, 2).join(' - '); // Show range
+}
+
+/**
+ * Format pivot table view (main output format)
+ */
+export function formatPivotTable(results: AccountQuotaResult[], cacheAge?: string): string {
   const lines: string[] = [];
   
   // Header
   lines.push('');
-  lines.push(`╔${'═'.repeat(59)}╗`);
-  lines.push(`║${' '.repeat(9)}Google/Antigravity Quota - Multi-Account${' '.repeat(9)}║`);
-  lines.push(`╚${'═'.repeat(59)}╝`);
+  lines.push(`${COLORS.bright}Google/Antigravity Quota - Multi-Account${COLORS.reset}`);
+  lines.push('═'.repeat(80));
   lines.push('');
   
-  // Table header
-  lines.push(`┌${'─'.repeat(27)}┬${'─'.repeat(16)}┬${'─'.repeat(16)}┐`);
-  lines.push(`│ Account${' '.repeat(19)}│ Antigravity Pool │ Gemini CLI Pool  │`);
-  lines.push(`├${'─'.repeat(27)}┼${'─'.repeat(16)}┼${'─'.repeat(16)}┤`);
+  // Get all model names and group by pool
+  const allModelNames = getAllModelNames(results);
+  const { antigravity, geminiCli } = groupModelsByPool(allModelNames);
   
-  // Table rows
-  const issues: string[] = [];
-  for (const result of results) {
-    let displayEmail = result.email;
-    if (displayEmail.length > 25) {
-      displayEmail = displayEmail.substring(0, 22) + '...';
-    }
-    displayEmail = displayEmail.padEnd(25);
-    
-    if (!result.success) {
-      lines.push(`│ ${displayEmail}│ ${COLORS.red}❌ Error${COLORS.reset}${' '.repeat(7)}│ ${COLORS.red}❌ Error${COLORS.reset}${' '.repeat(7)}│`);
-      issues.push(`  ${result.email}: ${result.error}`);
-      continue;
-    }
-    
-    // Group models by quota pool
-    const antigravityModels = result.models?.filter(m =>
-      m.name.includes('claude') || (m.name.startsWith('gemini-3-') && !m.name.includes('preview'))
-    ) || [];
-    
-    const geminiCliModels = result.models?.filter(m =>
-      m.name.startsWith('gemini-2.5-') || m.name.includes('preview')
-    ) || [];
-    
-    const antigravityQuota = getPoolQuota(antigravityModels);
-    const geminiCliQuota = getPoolQuota(geminiCliModels);
-    
-    // Format pool status
-    const formatPool = (quota: ReturnType<typeof getPoolQuota>): string => {
-      const icon = getStatusIcon(quota.status);
-      const percent = `${quota.percent}%`.padStart(4);
-      const count = `(${quota.total})`.padEnd(5);
-      return `${icon} ${percent} ${count}`;
-    };
-    
-    const antigravityCell = formatPool(antigravityQuota).padEnd(16 + 10); // +10 for ANSI codes
-    const geminiCliCell = formatPool(geminiCliQuota).padEnd(16 + 10);
-    
-    lines.push(`│ ${displayEmail}│ ${antigravityCell}│ ${geminiCliCell}│`);
-    
-    // Track issues
-    if (antigravityQuota.status !== 'healthy' || geminiCliQuota.status !== 'healthy') {
-      let issue = `  ${result.email}:`;
-      if (antigravityQuota.status === 'critical') {
-        issue += ` Antigravity quota CRITICAL at ${antigravityQuota.percent}%`;
-      } else if (antigravityQuota.status === 'warning') {
-        issue += ` Antigravity quota at ${antigravityQuota.percent}%`;
-      }
-      if (geminiCliQuota.status === 'critical') {
-        issue += ` ${antigravityQuota.status !== 'healthy' ? '•' : ''} Gemini CLI quota CRITICAL at ${geminiCliQuota.percent}%`;
-      } else if (geminiCliQuota.status === 'warning') {
-        issue += ` ${antigravityQuota.status !== 'healthy' ? '•' : ''} Gemini CLI quota at ${geminiCliQuota.percent}%`;
-      }
-      issues.push(issue);
-    }
-  }
-  
-  lines.push(`└${'─'.repeat(27)}┴${'─'.repeat(16)}┴${'─'.repeat(16)}┘`);
-  lines.push('');
-  
-  // Quota pools explanation
-  lines.push('Quota Pools:');
-  lines.push(`  ${COLORS.cyan}🔵 Antigravity:${COLORS.reset} Claude (3) + Gemini 3 (4)`);
-  lines.push(`  ${COLORS.cyan}🟢 Gemini CLI:${COLORS.reset}  Gemini 2.5 (4)`);
-  lines.push('');
-  
-  // Issues
-  if (issues.length > 0) {
-    lines.push(`${COLORS.yellow}⚠️ Issues Detected:${COLORS.reset}`);
-    lines.push(...issues);
-    lines.push('');
-    lines.push(`${COLORS.dim}💡 Use \`gquota -v\` to see detailed breakdown${COLORS.reset}`);
+  // Antigravity Pool Table
+  if (antigravity.length > 0) {
+    const resetTime = getPoolResetTime(results, antigravity);
+    const poolLines = formatPoolTable(
+      'ANTIGRAVITY QUOTA POOL',
+      'Claude + Gemini 3',
+      antigravity,
+      results,
+      resetTime
+    );
+    lines.push(...poolLines);
     lines.push('');
   }
   
-  // Summary footer
-  lines.push('═'.repeat(60));
+  // Gemini CLI Pool Table
+  if (geminiCli.length > 0) {
+    const resetTime = getPoolResetTime(results, geminiCli);
+    const poolLines = formatPoolTable(
+      'GEMINI CLI QUOTA POOL',
+      'Gemini 2.5 + 3 Preview',
+      geminiCli,
+      results,
+      resetTime
+    );
+    lines.push(...poolLines);
+    lines.push('');
+  }
+  
+  // Account legend
+  lines.push('═'.repeat(80));
+  lines.push(`${COLORS.bright}Accounts:${COLORS.reset}`);
+  for (let i = 0; i < results.length; i++) {
+    const result = results[i];
+    const projectId = result.projectId || 'unknown';
+    lines.push(`  #${i + 1}: ${result.email} ${COLORS.dim}(${projectId})${COLORS.reset}`);
+  }
+  lines.push('');
+  
+  // Summary
   const summary = generateSummary(results);
   lines.push(formatSummary(summary, cacheAge));
   lines.push('');
-  lines.push(`${COLORS.dim}💡 gquota -v              Show all models (detailed view)${COLORS.reset}`);
-  lines.push(`${COLORS.dim}💡 gquota --account 1     Show only account #1 details${COLORS.reset}`);
-  lines.push(`${COLORS.dim}💡 gquota --refresh       Force refresh (bypass cache)${COLORS.reset}`);
+  
+  // Help hints
+  lines.push(`${COLORS.dim}gquota --account 1     Show only account #1 details${COLORS.reset}`);
+  lines.push(`${COLORS.dim}gquota --refresh       Force refresh (bypass cache)${COLORS.reset}`);
+  lines.push(`${COLORS.dim}gquota --help          Show help message${COLORS.reset}`);
   
   return lines.join('\n');
 }
@@ -289,51 +348,21 @@ export function formatSingleAccount(result: AccountQuotaResult, index: number, c
   
   // Header
   lines.push('');
-  lines.push(`╔${'═'.repeat(59)}╗`);
-  lines.push(`║${' '.repeat(9)}Google/Antigravity Quota - Account #${index + 1}${' '.repeat(13)}║`);
-  lines.push(`╚${'═'.repeat(59)}╝`);
+  lines.push(`${COLORS.bright}Google/Antigravity Quota - Account #${index + 1}${COLORS.reset}`);
+  lines.push('═'.repeat(60));
   lines.push('');
   
   // Account info
-  lines.push(formatAccountResultCompact(result));
-  
-  // Footer
-  lines.push('');
-  lines.push('═'.repeat(60));
-  
-  if (result.success) {
-    const allHealthy = result.models?.every(m => m.status === 'healthy');
-    if (allHealthy) {
-      lines.push(`Status: ${COLORS.green}✅ All models healthy (${result.models?.length || 0}/${result.models?.length || 0})${COLORS.reset}`);
-    } else {
-      const healthyCount = result.models?.filter(m => m.status === 'healthy').length || 0;
-      lines.push(`Status: ${COLORS.yellow}⚠️ ${healthyCount}/${result.models?.length || 0} models healthy${COLORS.reset}`);
-    }
-  }
-  
-  if (cacheAge) {
-    lines.push(`${COLORS.dim}💾 Cache: ${cacheAge}${COLORS.reset}`);
-  }
-  
-  return lines.join('\n');
-}
-
-/**
- * Format account result in compact format (1 line per model)
- */
-function formatAccountResultCompact(result: AccountQuotaResult): string {
-  const lines: string[] = [];
-  
   if (!result.success) {
-    lines.push(`${COLORS.bright}${result.email} ${COLORS.red}❌${COLORS.reset}`);
+    lines.push(`Account: ${result.email}`);
     lines.push(`${COLORS.red}Error: ${result.error}${COLORS.reset}`);
     if (result.suggestion) {
-      lines.push(`${COLORS.cyan}Suggestion: ${result.suggestion}${COLORS.reset}`);
+      lines.push(`Suggestion: ${result.suggestion}`);
     }
     return lines.join('\n');
   }
   
-  lines.push(`Account: ${COLORS.bright}${result.email} ${COLORS.green}✅${COLORS.reset}`);
+  lines.push(`Account: ${result.email}`);
   lines.push(`Project: ${result.projectId}`);
   lines.push(`Tier: ${result.tier} ${COLORS.dim}• Last used: ${formatLastUsed(result.lastUsed)}${COLORS.reset}`);
   lines.push('');
@@ -348,69 +377,50 @@ function formatAccountResultCompact(result: AccountQuotaResult): string {
   ) || [];
   
   if (antigravityModels.length > 0) {
-    // Get reset time from first model
     const resetTime = antigravityModels[0]?.resetIn || 'N/A';
-    lines.push(`${COLORS.cyan}🔵 Antigravity Quota${COLORS.reset} ${COLORS.dim}(Claude + Gemini 3) • Reset: ${resetTime}${COLORS.reset}`);
+    lines.push(`${COLORS.bright}ANTIGRAVITY QUOTA POOL${COLORS.reset} ${COLORS.dim}(Claude + Gemini 3) • Reset: ${resetTime}${COLORS.reset}`);
     for (const model of antigravityModels) {
-      const name = model.displayName.padEnd(24);
-      lines.push(`  ${getStatusIcon(model.status)} ${name} ${createProgressBar(model.remainingPercent)} ${model.remainingPercent}%`);
+      const name = model.displayName.padEnd(28);
+      const bar = createProgressBar(model.remainingPercent, 12);
+      const percent = formatPercent(model.remainingPercent);
+      lines.push(`  ${name} ${bar} ${percent}`);
     }
     lines.push('');
   }
   
   if (geminiCliModels.length > 0) {
     const resetTime = geminiCliModels[0]?.resetIn || 'N/A';
-    lines.push(`${COLORS.cyan}🟢 Gemini CLI Quota${COLORS.reset} ${COLORS.dim}(Gemini 2.5 + 3 Preview) • Reset: ${resetTime}${COLORS.reset}`);
+    lines.push(`${COLORS.bright}GEMINI CLI QUOTA POOL${COLORS.reset} ${COLORS.dim}(Gemini 2.5 + 3 Preview) • Reset: ${resetTime}${COLORS.reset}`);
     for (const model of geminiCliModels) {
-      const name = model.displayName.padEnd(24);
-      lines.push(`  ${getStatusIcon(model.status)} ${name} ${createProgressBar(model.remainingPercent)} ${model.remainingPercent}%`);
+      const name = model.displayName.padEnd(28);
+      const bar = createProgressBar(model.remainingPercent, 12);
+      const percent = formatPercent(model.remainingPercent);
+      lines.push(`  ${name} ${bar} ${percent}`);
     }
   }
   
-  return lines.join('\n');
-}
-
-/**
- * Format detailed quota output with all accounts (verbose mode)
- */
-export function formatDetailedView(results: AccountQuotaResult[], cacheAge?: string): string {
-  const lines: string[] = [];
-  
-  // Header
-  lines.push('');
-  lines.push(`╔${'═'.repeat(59)}╗`);
-  lines.push(`║${' '.repeat(9)}Google/Antigravity Quota - Multi-Account${' '.repeat(9)}║`);
-  lines.push(`║${' '.repeat(20)}(Detailed View)${' '.repeat(24)}║`);
-  lines.push(`╚${'═'.repeat(59)}╝`);
-  lines.push('');
-  
-  // Format each account
-  for (let i = 0; i < results.length; i++) {
-    lines.push('━'.repeat(60));
-    lines.push(`${COLORS.bright}Account #${i + 1}: ${results[i].email} ${results[i].success ? COLORS.green + '✅' : COLORS.red + '❌'}${COLORS.reset}`);
-    lines.push('━'.repeat(60));
-    lines.push(formatAccountResultCompact(results[i]));
-    
-    if (i < results.length - 1) {
-      lines.push('');
-      lines.push('─'.repeat(60));
-      lines.push('');
-    }
-  }
-  
-  // Summary
+  // Footer
   lines.push('');
   lines.push('═'.repeat(60));
-  const summary = generateSummary(results);
-  lines.push(formatSummary(summary, cacheAge));
+  
+  const allHealthy = result.models?.every(m => m.remainingPercent >= 80);
+  if (allHealthy) {
+    lines.push(`Status: ${COLORS.green}All models healthy (${result.models?.length || 0}/${result.models?.length || 0})${COLORS.reset}`);
+  } else {
+    const healthyCount = result.models?.filter(m => m.remainingPercent >= 80).length || 0;
+    lines.push(`Status: ${COLORS.yellow}${healthyCount}/${result.models?.length || 0} models healthy${COLORS.reset}`);
+  }
+  
+  if (cacheAge) {
+    lines.push(`${COLORS.dim}Cache: ${cacheAge}${COLORS.reset}`);
+  }
   
   return lines.join('\n');
 }
 
 /**
- * Format complete quota output with all accounts (deprecated - use formatTableView or formatDetailedView)
+ * Format complete quota output (alias for formatPivotTable)
  */
 export function formatQuotaOutput(results: AccountQuotaResult[], cacheAge?: string): string {
-  // Default to table view for backwards compatibility
-  return formatTableView(results, cacheAge);
+  return formatPivotTable(results, cacheAge);
 }

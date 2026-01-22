@@ -3,7 +3,6 @@
  */
 
 export interface CliOptions {
-  verbose: boolean;
   account?: number;
   refresh: boolean;
   help: boolean;
@@ -14,7 +13,6 @@ export interface CliOptions {
  */
 export function parseCliArgs(args: string[]): CliOptions {
   const options: CliOptions = {
-    verbose: false,
     refresh: false,
     help: false,
   };
@@ -23,11 +21,6 @@ export function parseCliArgs(args: string[]): CliOptions {
     const arg = args[i];
 
     switch (arg) {
-      case '-v':
-      case '--verbose':
-        options.verbose = true;
-        break;
-
       case '-a':
       case '--account':
         const accountNum = parseInt(args[i + 1], 10);
@@ -67,31 +60,30 @@ export function parseCliArgs(args: string[]): CliOptions {
  */
 export function showHelp(): void {
   console.log(`
-╔═══════════════════════════════════════════════════════════╗
-║    Google/Antigravity Quota Checker - Multi-Account      ║
-╚═══════════════════════════════════════════════════════════╝
+Google/Antigravity Quota Checker - Multi-Account
+═════════════════════════════════════════════════
 
 USAGE:
   gquota [options]
 
 OPTIONS:
-  (none)              Show compact table view (default)
-  -v, --verbose       Show detailed view with all models
+  (none)              Show pivot table (default)
   -a, --account <N>   Show only account #N (1-based index)
   -r, --refresh       Force refresh (bypass cache)
   -h, --help          Show this help message
 
 EXAMPLES:
-  gquota                    # Quick table overview
-  gquota -v                 # Detailed view with all models
+  gquota                    # Pivot table overview
   gquota --account 1        # Show only first account details
-  gquota -v --refresh       # Detailed view with fresh data
+  gquota --refresh          # Fresh data (bypass cache)
   gquota -a 2 -r            # Account #2 with fresh data
 
-MODES:
-  Table View (default):  Compact overview of all accounts
-  Detailed View (-v):    Full model-by-model breakdown
-  Single Account (-a):   Focus on specific account
+OUTPUT:
+  Pivot table showing all models as rows and accounts as columns.
+  Progress bars and colors indicate quota health:
+    Green  (80-100%)  - Healthy
+    Yellow (50-79%)   - Warning
+    Red    (<50%)     - Critical
 
 For more info: https://github.com/ninhhaidang/opencode-antigravity-quota
 `);

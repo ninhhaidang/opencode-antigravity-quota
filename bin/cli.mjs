@@ -1,13 +1,13 @@
 #!/usr/bin/env node
 /**
  * CLI command to check Google Antigravity quota
- * Shows formatted output with colors and progress bars
+ * Shows formatted output with pivot table display
  */
 
 import { readAccountsFile } from '../dist/auth.js';
 import { getAccountQuota } from '../dist/quota.js';
 import { readCache, writeCache, formatCacheAge, clearCache } from '../dist/cache.js';
-import { formatTableView, formatDetailedView, formatSingleAccount } from '../dist/format.js';
+import { formatPivotTable, formatSingleAccount } from '../dist/format.js';
 import { parseCliArgs, showHelp } from '../dist/cli-args.js';
 
 async function main() {
@@ -28,7 +28,6 @@ async function main() {
       const cacheAge = formatCacheAge(cache.timestamp);
       
       // Filter by account if requested
-      let filteredResults = results;
       if (options.account !== undefined) {
         if (options.account < 1 || options.account > results.length) {
           console.error(`Error: Account #${options.account} does not exist (only ${results.length} accounts available)`);
@@ -39,12 +38,8 @@ async function main() {
         return;
       }
       
-      // Format output based on mode
-      if (options.verbose) {
-        console.log(formatDetailedView(filteredResults, cacheAge));
-      } else {
-        console.log(formatTableView(filteredResults, cacheAge));
-      }
+      // Show pivot table
+      console.log(formatPivotTable(results, cacheAge));
       return;
     }
   } else {
@@ -99,10 +94,8 @@ async function main() {
   // 5. Format and display output
   if (options.account !== undefined) {
     console.log(formatSingleAccount(results[0], options.account - 1));
-  } else if (options.verbose) {
-    console.log(formatDetailedView(results));
   } else {
-    console.log(formatTableView(results));
+    console.log(formatPivotTable(results));
   }
 }
 
