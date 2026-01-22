@@ -188,7 +188,7 @@ function formatPoolTable(
   
   // Column widths (visible characters only)
   const modelColWidth = 30;
-  const acctColWidth = 19; // [██████████] 100% = 17 chars + 2 padding
+  const acctColWidth = 22; // [██████████] 100% = 17 chars + 2 padding + 3 for "Account" vs "Acct"
   
   // Table header
   lines.push(`${COLORS.bright}${poolName}${COLORS.reset} ${COLORS.dim}(${poolDescription})${COLORS.reset}`);
@@ -198,7 +198,7 @@ function formatPoolTable(
   let headerRow = `│ ${'Model'.padEnd(modelColWidth - 2)} `;
   for (let i = 0; i < numAccounts; i++) {
     headerBorder += `┬${'─'.repeat(acctColWidth)}`;
-    headerRow += `│ ${`Acct #${i + 1}`.padEnd(acctColWidth - 2)} `;
+    headerRow += `│ ${`Account #${i + 1}`.padEnd(acctColWidth - 2)} `;
   }
   headerBorder += '┐';
   headerRow += '│';
@@ -286,12 +286,6 @@ function getPoolResetTime(results: AccountQuotaResult[], modelNames: string[]): 
  */
 export function formatPivotTable(results: AccountQuotaResult[], cacheAge?: string): string {
   const lines: string[] = [];
-  
-  // Header
-  lines.push('');
-  lines.push(`${COLORS.bright}Google/Antigravity Quota - Multi-Account${COLORS.reset}`);
-  lines.push('═'.repeat(80));
-  lines.push('');
   
   // Get all model names and group by pool
   const allModelNames = getAllModelNames(results);
