@@ -64,13 +64,29 @@ function formatAccountResult(result: AccountQuotaResult, index: number): string 
   lines.push(`  Last used: ${COLORS.dim}${formatLastUsed(result.lastUsed)}${COLORS.reset}`);
   lines.push('');
   
-  // Group models by type
-  const geminiModels = result.models?.filter(m => m.name.includes('gemini')) || [];
-  const claudeModels = result.models?.filter(m => m.name.includes('claude')) || [];
+  // Group models by quota pool
+  // Antigravity Quota: Claude + Gemini 3 (non-preview)
+  // Gemini CLI Quota: Gemini 2.5 + Gemini 3 preview
   
-  if (geminiModels.length > 0) {
-    lines.push(`  ${COLORS.bright}Gemini Models:${COLORS.reset}`);
-    for (const model of geminiModels) {
+  const antigravityModels = result.models?.filter(m => {
+    // Claude models use Antigravity quota
+    if (m.name.includes('claude')) return true;
+    // Gemini 3 non-preview models use Antigravity quota
+    if (m.name.startsWith('gemini-3-') && !m.name.includes('preview')) return true;
+    return false;
+  }) || [];
+  
+  const geminiCliModels = result.models?.filter(m => {
+    // Gemini 2.5 models use Gemini CLI quota
+    if (m.name.startsWith('gemini-2.5-')) return true;
+    // Gemini 3 preview models use Gemini CLI quota
+    if (m.name.includes('preview')) return true;
+    return false;
+  }) || [];
+  
+  if (antigravityModels.length > 0) {
+    lines.push(`  ${COLORS.bright}${COLORS.cyan}Antigravity Quota${COLORS.reset} ${COLORS.dim}(Claude + Gemini 3)${COLORS.reset}`);
+    for (const model of antigravityModels) {
       lines.push(`    ${getStatusIcon(model.status)} ${model.displayName}`);
       lines.push(`       ${createProgressBar(model.remainingPercent)} ${model.remainingPercent}% remaining`);
       lines.push(`       ${COLORS.dim}Resets in: ${model.resetIn}${COLORS.reset}`);
@@ -78,9 +94,9 @@ function formatAccountResult(result: AccountQuotaResult, index: number): string 
     lines.push('');
   }
   
-  if (claudeModels.length > 0) {
-    lines.push(`  ${COLORS.bright}Claude Models:${COLORS.reset}`);
-    for (const model of claudeModels) {
+  if (geminiCliModels.length > 0) {
+    lines.push(`  ${COLORS.bright}${COLORS.cyan}Gemini CLI Quota${COLORS.reset} ${COLORS.dim}(Gemini 2.5 + 3 Preview)${COLORS.reset}`);
+    for (const model of geminiCliModels) {
       lines.push(`    ${getStatusIcon(model.status)} ${model.displayName}`);
       lines.push(`       ${createProgressBar(model.remainingPercent)} ${model.remainingPercent}% remaining`);
       lines.push(`       ${COLORS.dim}Resets in: ${model.resetIn}${COLORS.reset}`);
