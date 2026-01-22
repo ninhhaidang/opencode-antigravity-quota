@@ -7,8 +7,9 @@ import { COLORS } from './constants.js';
 
 /**
  * Create a colored progress bar for quota visualization
+ * Fixed width output with consistent ANSI codes
  */
-function createProgressBar(percent: number, width: number = 12): string {
+function createProgressBar(percent: number, width: number = 10): string {
   const filled = Math.round((percent / 100) * width);
   const empty = width - filled;
   
@@ -17,7 +18,11 @@ function createProgressBar(percent: number, width: number = 12): string {
   if (percent < 50) color = COLORS.red;
   else if (percent < 80) color = COLORS.yellow;
   
-  return `[${color}${'█'.repeat(filled)}${COLORS.gray}${'░'.repeat(empty)}${COLORS.reset}]`;
+  // Use single color for entire bar to ensure consistent ANSI code length
+  const filledPart = '█'.repeat(filled);
+  const emptyPart = '░'.repeat(empty);
+  
+  return `${color}[${filledPart}${emptyPart}]${COLORS.reset}`;
 }
 
 /**
@@ -151,18 +156,21 @@ function getModelQuota(result: AccountQuotaResult, modelName: string): ModelQuot
 }
 
 /**
- * Format a cell in the pivot table
+ * Format a cell in the pivot table (fixed width, accounts for ANSI codes)
  */
-function formatCell(quota: ModelQuota | undefined, cellWidth: number): string {
+function formatCell(quota: ModelQuota | undefined): string {
   if (!quota) {
-    return `${COLORS.dim}${'N/A'.padEnd(cellWidth - 2)}${COLORS.reset}`;
+    return `${COLORS.dim}N/A${COLORS.reset}`.padEnd(19 + 9); // 9 = ANSI code length
   }
   
+  // Fixed format: [██████████] 100%
+  // Bar: 10 chars, brackets: 2, space: 1, percent: 4 = 17 visible chars
   const bar = createProgressBar(quota.remainingPercent, 10);
-  const percent = formatPercent(quota.remainingPercent);
-  // Account for ANSI codes in length calculation
-  const content = `${bar} ${percent}`;
-  return content;
+  const percentStr = `${quota.remainingPercent}%`.padStart(4);
+  const color = getPercentColor(quota.remainingPercent);
+  
+  // Return fixed-width content
+  return `${bar} ${color}${percentStr}${COLORS.reset}`;
 }
 
 /**
@@ -178,9 +186,9 @@ function formatPoolTable(
   const lines: string[] = [];
   const numAccounts = results.length;
   
-  // Column widths
+  // Column widths (visible characters only)
   const modelColWidth = 30;
-  const acctColWidth = 21; // [████████████] 100%
+  const acctColWidth = 19; // [██████████] 100% = 17 chars + 2 padding
   
   // Table header
   lines.push(`${COLORS.bright}${poolName}${COLORS.reset} ${COLORS.dim}(${poolDescription})${COLORS.reset}`);
@@ -230,7 +238,7 @@ function formatPoolTable(
         row += `│ ${COLORS.red}${'ERROR'.padEnd(acctColWidth - 2)}${COLORS.reset} `;
       } else {
         const quota = getModelQuota(result, modelName);
-        row += `│ ${formatCell(quota, acctColWidth)} `;
+        row += `│ ${formatCell(quota)} `;
       }
     }
     row += '│';
